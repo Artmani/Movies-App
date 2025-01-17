@@ -14,7 +14,6 @@
     "browser": true,
     "es2021": true
   },
-
   "ignorePatterns": ["node_modules", "dist", "build", "README", "vite.config"],
   "extends": [
     "eslint:recommended",
@@ -36,9 +35,17 @@
     "indent": ["error", 2],
     "linebreak-style": [0, "unix"],
     "quotes": ["error", "single"],
-    //    "semi": ["error", "always"],
     "react/react-in-jsx-scope": "off",
     "react/prop-types": 0,
+    "import/extensions": [
+      "error",
+      "ignorePackages",
+      {
+        "js": "never",
+        "jsx": "never"
+      }
+    ],
+    "import/prefer-default-export": "off",
     "import/no-unresolved": [2, { "caseSensitive": false }],
     "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
     "import/order": [
