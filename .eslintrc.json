@@ -32,6 +32,7 @@
   },
   "plugins": ["react", "import"],
   "rules": {
+    "no-console": "off",
     "indent": ["error", 2],
     "linebreak-style": [0, "unix"],
     "quotes": ["error", "single"],

@@ -1,6 +1,8 @@
-import { createRoot } from 'react-dom/client'
-import 'antd/dist/reset.css'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
 
 import App from './App'
+import 'antd/dist/reset.css'
 
-createRoot(document.getElementById('root')).render(<App />)
+const root = ReactDOM.createRoot(document.getElementById('root'))
+root.render(<App />)
