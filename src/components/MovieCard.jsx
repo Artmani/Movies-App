@@ -33,11 +33,11 @@ function MovieCard({ movie }) {
 
 MovieCard.propTypes = {
   movie: PropTypes.shape({
-    id: PropTypes.number.isRequired, // id фильма
-    title: PropTypes.string.isRequired, // название фильма
-    release_date: PropTypes.string, // дата релиза (может быть null)
-    overview: PropTypes.string, // описание фильма
-    poster_path: PropTypes.string, // путь к постеру
+    id: PropTypes.number.isRequired,
+    title: PropTypes.string.isRequired,
+    release_date: PropTypes.string,
+    overview: PropTypes.string,
+    poster_path: PropTypes.string,
   }).isRequired,
 }
 
