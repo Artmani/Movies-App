@@ -7,8 +7,7 @@ import { truncateText } from '../utils/truncateText'
 import '../styles/MovieCard.css'
 
 function MovieCard({ movie }) {
-  const { title, releaseDate, overview, posterPath } = movie
-
+  const { title, release_date: releaseDate, overview, poster_path: posterPath } = movie
   const formattedDate = releaseDate ? format(new Date(releaseDate), 'd MMM yyyy', { locale: ru }) : 'Неизвестно'
 
   const posterUrl = posterPath ? `https://image.tmdb.org/t/p/w300/${posterPath}` : null
@@ -36,9 +35,9 @@ MovieCard.propTypes = {
   movie: PropTypes.shape({
     id: PropTypes.number.isRequired, // id фильма
     title: PropTypes.string.isRequired, // название фильма
-    releaseDate: PropTypes.string, // дата релиза (может быть null)
+    release_date: PropTypes.string, // дата релиза (может быть null)
     overview: PropTypes.string, // описание фильма
-    posterPath: PropTypes.string, // путь к постеру
+    poster_path: PropTypes.string, // путь к постеру
   }).isRequired,
 }
 
