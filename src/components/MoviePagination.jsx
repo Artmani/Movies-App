@@ -13,7 +13,7 @@ function MoviePagination({ totalPages, currentPage, onPageChange }) {
       defaultPageSize={20}
       total={totalPages * 20}
       style={{
-        marginTop: 20,
+        marginTop: 25,
       }}
     />
   )
