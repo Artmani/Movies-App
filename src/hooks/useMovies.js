@@ -1,12 +1,21 @@
 import { useState, useEffect } from 'react'
 
-export const useMovies = (API_KEY, isOffline) => {
+export const useMovies = (API_KEY, searchQuery, page) => {
   const [movies, setMovies] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [totalResults, setTotalResults] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
 
   useEffect(() => {
-    if (isOffline) return
+    if (!searchQuery.trim()) {
+      setMovies([])
+      setTotalResults(0)
+      setTotalPages(0)
+      setIsLoading(false)
+      setError(null)
+      return
+    }
 
     async function fetchMovies() {
       try {
@@ -14,7 +23,7 @@ export const useMovies = (API_KEY, isOffline) => {
         setError(null)
 
         const response = await fetch(
-          `https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&query=return&language=ru-RU`
+          `https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&query=${searchQuery}&page=${page}&language=ru-RU`
         )
 
         if (!response.ok) {
@@ -25,10 +34,14 @@ export const useMovies = (API_KEY, isOffline) => {
         const data = await response.json()
         if (!data.results || data.results.length === 0) {
           setError('Результаты не найдены')
+          setTotalResults(0)
+          setTotalPages(0)
           return
         }
 
         setMovies(data.results)
+        setTotalResults(data.total_results)
+        setTotalPages(data.total_pages)
       } catch (err) {
         setError(`Ошибка запроса: ${err.message}`)
       } finally {
@@ -37,7 +50,7 @@ export const useMovies = (API_KEY, isOffline) => {
     }
 
     fetchMovies()
-  }, [API_KEY, isOffline])
+  }, [API_KEY, searchQuery, page])
 
-  return { movies, isLoading, error }
+  return { movies, isLoading, error, totalResults, totalPages }
 }
