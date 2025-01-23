@@ -1,7 +1,7 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import PropTypes from 'prop-types'
 
 import { truncateText } from '../utils/truncateText'
 import '../styles/MovieCard.css'
