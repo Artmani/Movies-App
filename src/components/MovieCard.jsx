@@ -1,17 +1,25 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import PropTypes from 'prop-types'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { Rate } from 'antd'
+import { Rate, Tag } from 'antd'
 
+import { GenresContext } from '../hooks/GenresContext'
 import { truncateText } from '../utils/truncateText'
 import '../styles/MovieCard.css'
 
 function MovieCard({ movie }) {
-  const { title, release_date: releaseDate, overview, poster_path: posterPath, vote_average: rating } = movie
+  const {
+    title,
+    release_date: releaseDate,
+    overview,
+    poster_path: posterPath,
+    vote_average: rating,
+    genre_ids: genreIds,
+  } = movie
   const formattedDate = releaseDate ? format(new Date(releaseDate), 'd MMM yyyy', { locale: ru }) : 'Неизвестно'
-
   const posterUrl = posterPath ? `https://image.tmdb.org/t/p/w300/${posterPath}` : null
+  const genres = useContext(GenresContext)
 
   const getRatingColor = (value) => {
     if (value >= 7) return '#66E900'
@@ -27,6 +35,8 @@ function MovieCard({ movie }) {
     console.log(`Рейтинг фильма "${title}" установлен на ${value}`)
   }
 
+  const movieGenres = genres.filter((genre) => genreIds.includes(genre.id))
+
   return (
     <div className="movie-card">
       <div className="movie-card__poster">
@@ -40,16 +50,16 @@ function MovieCard({ movie }) {
       <div className="movie-card__content">
         <div className="movie-card__zag">
           <h3 className="movie-card__title">{title}</h3>
-          <div
-            className="movie-card__rating"
-            style={{
-              borderColor: getRatingColor(rating),
-            }}
-          >
+          <div className="movie-card__rating" style={{ borderColor: getRatingColor(rating) }}>
             {rating || 'N/A'}
           </div>
         </div>
         <p className="movie-card__date">{formattedDate}</p>
+        <div className="movie-card__genres">
+          {movieGenres.map((genre) => (
+            <Tag key={genre.id}>{genre.name}</Tag>
+          ))}
+        </div>
         <div className="movie-card__overview">{truncateText(overview, 120)}</div>
         <Rate className="movie-card__rate" count={10} value={userRating} onChange={handleRateChange} />
       </div>
@@ -65,6 +75,7 @@ MovieCard.propTypes = {
     overview: PropTypes.string,
     poster_path: PropTypes.string,
     vote_average: PropTypes.number,
+    genre_ids: PropTypes.arrayOf(PropTypes.number).isRequired,
   }).isRequired,
 }
 
