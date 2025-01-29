@@ -9,20 +9,24 @@ import { truncateText } from '../utils/truncateText'
 import { GuestSessionContext } from '../hooks/GuestSessionContext'
 import '../styles/MovieCard.css'
 
-function MovieCard({ movie }) {
-  const guestSessionId = useContext(GuestSessionContext)
+function MovieCard({ movie, onRatingChange }) {
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY
+  const { guestSessionId, fetchRatedMovies, updateRatedMovie, removeMovieFromRated } = useContext(GuestSessionContext)
+  const genres = useContext(GenresContext)
+
   const {
+    id,
     title,
     release_date: releaseDate,
     overview,
     poster_path: posterPath,
     vote_average: rating,
     genre_ids: genreIds,
+    rating: userInitialRating,
   } = movie
+
   const formattedDate = releaseDate ? format(new Date(releaseDate), 'd MMM yyyy', { locale: ru }) : 'Неизвестно'
   const posterUrl = posterPath ? `https://image.tmdb.org/t/p/w300/${posterPath}` : null
-  const genres = useContext(GenresContext)
 
   const getRatingColor = (value) => {
     if (value >= 7) return '#66E900'
@@ -31,26 +35,51 @@ function MovieCard({ movie }) {
     return '#E90000'
   }
 
-  const [userRating, setUserRating] = useState(null)
+  const [userRating, setUserRating] = useState(userInitialRating || null)
 
-  const handleRateChange = async (value) => {
-    setUserRating(value)
+  const handleRemoveRating = async () => {
+    if (!guestSessionId) return
+
     try {
       const response = await fetch(
-        `https://api.themoviedb.org/3/movie/${movie.id}/rating?api_key=${API_KEY}&guest_session_id=${guestSessionId}`,
+        `https://api.themoviedb.org/3/movie/${id}/rating?api_key=${API_KEY}&guest_session_id=${guestSessionId}`,
+        { method: 'DELETE' }
+      )
+      const data = await response.json()
+      if (data.success) {
+        setUserRating(null)
+        onRatingChange(id, null)
+        removeMovieFromRated(id)
+        fetchRatedMovies()
+      }
+    } catch (error) {
+      console.error('Ошибка при удалении оценки:', error)
+    }
+  }
+
+  const handleRateChange = async (value) => {
+    if (!guestSessionId) return
+
+    if (value === 0) {
+      handleRemoveRating()
+      return
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.themoviedb.org/3/movie/${id}/rating?api_key=${API_KEY}&guest_session_id=${guestSessionId}`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ value }),
         }
       )
       const data = await response.json()
       if (data.success) {
-        console.log(`Рейтинг фильма "${movie.title}" установлен на ${value}`)
-      } else {
-        console.error('Ошибка при оценке фильма:', data.status_message)
+        setUserRating(value)
+        onRatingChange(id, value)
+        updateRatedMovie(id, value)
+        fetchRatedMovies()
       }
     } catch (error) {
       console.error('Ошибка при оценке фильма:', error)
@@ -68,7 +97,6 @@ function MovieCard({ movie }) {
           <div className="movie-card__no-image">Нет изображения</div>
         )}
       </div>
-
       <div className="movie-card__content">
         <div className="movie-card__zag">
           <h3 className="movie-card__title">{title}</h3>
@@ -83,7 +111,7 @@ function MovieCard({ movie }) {
           ))}
         </div>
         <div className="movie-card__overview">{truncateText(overview, 120)}</div>
-        <Rate className="movie-card__rate" count={10} value={userRating} onChange={handleRateChange} />
+        <Rate className="movie-card__rate" count={10} value={userRating} onChange={handleRateChange} allowClear />
       </div>
     </div>
   )
@@ -98,7 +126,9 @@ MovieCard.propTypes = {
     poster_path: PropTypes.string,
     vote_average: PropTypes.number,
     genre_ids: PropTypes.arrayOf(PropTypes.number).isRequired,
+    rating: PropTypes.number,
   }).isRequired,
+  onRatingChange: PropTypes.func.isRequired,
 }
 
 export default MovieCard
