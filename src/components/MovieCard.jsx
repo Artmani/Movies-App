@@ -6,9 +6,12 @@ import { Rate, Tag } from 'antd'
 
 import { GenresContext } from '../hooks/GenresContext'
 import { truncateText } from '../utils/truncateText'
+import { GuestSessionContext } from '../hooks/GuestSessionContext'
 import '../styles/MovieCard.css'
 
 function MovieCard({ movie }) {
+  const guestSessionId = useContext(GuestSessionContext)
+  const API_KEY = import.meta.env.VITE_TMDB_API_KEY
   const {
     title,
     release_date: releaseDate,
@@ -30,9 +33,28 @@ function MovieCard({ movie }) {
 
   const [userRating, setUserRating] = useState(null)
 
-  const handleRateChange = (value) => {
+  const handleRateChange = async (value) => {
     setUserRating(value)
-    console.log(`Рейтинг фильма "${title}" установлен на ${value}`)
+    try {
+      const response = await fetch(
+        `https://api.themoviedb.org/3/movie/${movie.id}/rating?api_key=${API_KEY}&guest_session_id=${guestSessionId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ value }),
+        }
+      )
+      const data = await response.json()
+      if (data.success) {
+        console.log(`Рейтинг фильма "${movie.title}" установлен на ${value}`)
+      } else {
+        console.error('Ошибка при оценке фильма:', data.status_message)
+      }
+    } catch (error) {
+      console.error('Ошибка при оценке фильма:', error)
+    }
   }
 
   const movieGenres = genres.filter((genre) => genreIds.includes(genre.id))
