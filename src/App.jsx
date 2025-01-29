@@ -1,51 +1,22 @@
-import React, { useState } from 'react'
+import { Tabs } from 'antd'
 
-import { useMovies } from './hooks/useMovies'
-import { useNetworkStatus } from './hooks/useNetworkStatus'
-import { useDebounce } from './hooks/useDebounce'
-import MovieSearch from './components/MovieSearch'
-import MovieList from './components/MovieList'
-import MoviePagination from './components/MoviePagination'
-import OfflineAlert from './components/OfflineAlert'
-import ErrorAlert from './components/ErrorAlert'
-import LoadingIndicator from './components/LoadingIndicator'
+import RatedMovies from './components/RatedMovies'
+import SearchMovies from './components/SearchMovies'
 
-import './styles/App.css'
+const items = [
+  {
+    key: '1',
+    label: 'Search',
+    children: <SearchMovies />,
+  },
+  {
+    key: '2',
+    label: 'Rated',
+    children: <RatedMovies />,
+  },
+]
 
 function App() {
-  const API_KEY = import.meta.env.VITE_TMDB_API_KEY
-  const isOffline = useNetworkStatus()
-
-  const [searchQuery, setSearchQuery] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-
-  const { movies, isLoading, error, totalResults, totalPages } = useMovies(API_KEY, searchQuery, currentPage)
-
-  const handleSearch = useDebounce((value) => {
-    setSearchQuery(value)
-    setCurrentPage(1)
-  }, 500)
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page)
-  }
-
-  return (
-    <div className="app-container">
-      {isOffline && <OfflineAlert />}
-      {error && <ErrorAlert message={error} />}
-      <MovieSearch onSearch={handleSearch} />
-      {isLoading ? <LoadingIndicator /> : <MovieList movies={movies} />}
-      {totalResults > 0 && !isLoading && (
-        <MoviePagination
-          totalResults={totalResults}
-          totalPages={totalPages}
-          currentPage={currentPage}
-          onPageChange={handlePageChange}
-        />
-      )}
-    </div>
-  )
+  return <Tabs defaultActiveKey="1" centered items={items} />
 }
-
 export default App
