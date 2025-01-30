@@ -64,17 +64,18 @@
 
 /* рейтинг */
 .movie-card__rating {
-  width: 40px;
-  height: 40px;
-  border: 2px solid;
+  width: 30px;
+  height: 30px;
+  border: 3px solid;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: bold;
   color: #000;
   background-color: #fff;
+  box-sizing: content-box;
 }
 
 /* звезды */
@@ -82,15 +83,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 8px;
   margin-top: 20px;
-  font-size: 19px;
+  margin-right: 8px;
+  margin-left: 8px;
+  font-size: 18px;
 }
 
 /* заголовок правой части*/
 .movie-card__zag {
   display: flex;
-  gap: 5px;
   align-items: center;
   justify-content: space-between;
 }

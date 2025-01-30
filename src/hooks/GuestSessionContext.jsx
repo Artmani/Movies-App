@@ -1,14 +1,39 @@
-import React, { createContext, useState, useEffect, useMemo } from 'react'
+import React, { createContext, useEffect, useMemo, useReducer, useCallback } from 'react'
 
 export const GuestSessionContext = createContext()
 
+const initialState = {
+  guestSessionId: null,
+  ratedMovies: [],
+}
+
+function sessionReducer(state, action) {
+  switch (action.type) {
+    case 'SET_SESSION_ID':
+      return { ...state, guestSessionId: action.payload }
+    case 'SET_RATED_MOVIES':
+      return { ...state, ratedMovies: action.payload }
+    case 'REMOVE_MOVIE':
+      return { ...state, ratedMovies: state.ratedMovies.filter((movie) => movie.id !== action.payload) }
+    case 'UPDATE_MOVIE_RATING':
+      return {
+        ...state,
+        ratedMovies: state.ratedMovies.map((movie) =>
+          movie.id === action.payload.movieId ? { ...movie, rating: action.payload.newRating } : movie
+        ),
+      }
+    default:
+      return state
+  }
+}
+
 export function GuestSessionProvider({ children }) {
-  const [guestSessionId, setGuestSessionId] = useState(null)
-  const [ratedMovies, setRatedMovies] = useState([])
+  const [state, dispatch] = useReducer(sessionReducer, initialState)
+  const { guestSessionId, ratedMovies } = state
 
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY
 
-  const fetchRatedMovies = async () => {
+  const fetchRatedMovies = useCallback(async () => {
     if (!guestSessionId) return
 
     try {
@@ -17,7 +42,7 @@ export function GuestSessionProvider({ children }) {
       )
 
       if (response.status === 404) {
-        setRatedMovies([])
+        dispatch({ type: 'SET_RATED_MOVIES', payload: [] })
         return
       }
 
@@ -27,17 +52,17 @@ export function GuestSessionProvider({ children }) {
       }
 
       const data = await response.json()
-      setRatedMovies(data.results || [])
+      dispatch({ type: 'SET_RATED_MOVIES', payload: data.results || [] })
     } catch (error) {
       console.error('Ошибка загрузки оценённых фильмов:', error)
     }
-  }
+  }, [guestSessionId, API_KEY])
 
   useEffect(() => {
     const storedSessionId = localStorage.getItem('guest_session_id')
 
     if (storedSessionId) {
-      setGuestSessionId(storedSessionId)
+      dispatch({ type: 'SET_SESSION_ID', payload: storedSessionId })
       fetchRatedMovies()
     } else {
       const createGuestSession = async () => {
@@ -53,7 +78,7 @@ export function GuestSessionProvider({ children }) {
 
           const data = await response.json()
           if (data.success && data.guest_session_id) {
-            setGuestSessionId(data.guest_session_id)
+            dispatch({ type: 'SET_SESSION_ID', payload: data.guest_session_id })
             localStorage.setItem('guest_session_id', data.guest_session_id)
             fetchRatedMovies()
           }
@@ -64,16 +89,15 @@ export function GuestSessionProvider({ children }) {
 
       createGuestSession()
     }
-  }, [])
+  }, [fetchRatedMovies])
 
   const removeMovieFromRated = (movieId) => {
-    setRatedMovies((prev) => prev.filter((movie) => movie.id !== movieId))
+    dispatch({ type: 'REMOVE_MOVIE', payload: movieId })
   }
 
   const updateRatedMovie = (movieId, newRating) => {
-    setRatedMovies((prevMovies) =>
-      prevMovies.map((movie) => (movie.id === movieId ? { ...movie, rating: newRating } : movie))
-    )
+    dispatch({ type: 'UPDATE_MOVIE_RATING', payload: { movieId, newRating } })
+    fetchRatedMovies()
   }
 
   const contextValue = useMemo(
@@ -84,7 +108,7 @@ export function GuestSessionProvider({ children }) {
       removeMovieFromRated,
       updateRatedMovie,
     }),
-    [guestSessionId, ratedMovies]
+    [guestSessionId, ratedMovies, fetchRatedMovies]
   )
 
   return <GuestSessionContext.Provider value={contextValue}>{children}</GuestSessionContext.Provider>

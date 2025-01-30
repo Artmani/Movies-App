@@ -27,12 +27,14 @@ export const useMovies = (API_KEY, searchQuery, page) => {
         )
 
         if (!response.ok) {
+          setMovies([])
           setError(`Ошибка: ${response.status} ${response.statusText}`)
           return
         }
 
         const data = await response.json()
         if (!data.results || data.results.length === 0) {
+          setMovies([])
           setError('Результаты не найдены')
           setTotalResults(0)
           setTotalPages(0)

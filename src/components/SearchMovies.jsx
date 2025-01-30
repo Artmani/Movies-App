@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react'
+import React, { useReducer, useContext } from 'react'
 
 import { useMovies } from '../hooks/useMovies'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
@@ -14,23 +14,43 @@ import LoadingIndicator from './LoadingIndicator'
 
 import '../styles/App.css'
 
+const initialState = {
+  searchQuery: '',
+  currentPage: 1,
+  isLoading: false,
+  error: null,
+}
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'SET_SEARCH_QUERY':
+      return { ...state, searchQuery: action.payload, currentPage: 1 }
+    case 'SET_CURRENT_PAGE':
+      return { ...state, currentPage: action.payload }
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload }
+    case 'SET_ERROR':
+      return { ...state, error: action.payload }
+    default:
+      throw new Error()
+  }
+}
+
 function SearchMovies() {
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY
   const isOffline = useNetworkStatus()
-  const { ratedMovies, fetchRatedMovies, updateRatedMovie, removeMovieFromRated } = useContext(GuestSessionContext)
+  const { ratedMovies, updateRatedMovie, removeMovieFromRated } = useContext(GuestSessionContext)
 
-  const [searchQuery, setSearchQuery] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
+  const [state, dispatch] = useReducer(reducer, initialState)
+  const { searchQuery, currentPage } = state
 
   const { movies, isLoading, error, totalResults, totalPages } = useMovies(API_KEY, searchQuery, currentPage)
-
   const handleRatingChange = (movieId, newRating) => {
     if (newRating === null) {
       removeMovieFromRated(movieId)
     } else {
       updateRatedMovie(movieId, newRating)
     }
-    fetchRatedMovies()
   }
 
   const moviesWithRatings = movies.map((movie) => {
@@ -39,9 +59,8 @@ function SearchMovies() {
   })
 
   const handleSearch = useDebounce((value) => {
-    setSearchQuery(value)
-    setCurrentPage(1)
-  }, 500)
+    dispatch({ type: 'SET_SEARCH_QUERY', payload: value })
+  }, 1)
 
   return (
     <div className="app-container">
@@ -54,7 +73,7 @@ function SearchMovies() {
           totalResults={totalResults}
           totalPages={totalPages}
           currentPage={currentPage}
-          onPageChange={setCurrentPage}
+          onPageChange={(page) => dispatch({ type: 'SET_CURRENT_PAGE', payload: page })}
         />
       )}
     </div>

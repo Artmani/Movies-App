@@ -1,17 +1,17 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext } from 'react'
 import PropTypes from 'prop-types'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { Rate, Tag } from 'antd'
 
 import { GenresContext } from '../hooks/GenresContext'
-import { truncateText } from '../utils/truncateText'
 import { GuestSessionContext } from '../hooks/GuestSessionContext'
+import { truncateText } from '../utils/truncateText'
 import '../styles/MovieCard.css'
 
-function MovieCard({ movie, onRatingChange }) {
+function MovieCard({ movie }) {
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY
-  const { guestSessionId, fetchRatedMovies, updateRatedMovie, removeMovieFromRated } = useContext(GuestSessionContext)
+  const { guestSessionId, updateRatedMovie, removeMovieFromRated } = useContext(GuestSessionContext)
   const genres = useContext(GenresContext)
 
   const {
@@ -20,9 +20,10 @@ function MovieCard({ movie, onRatingChange }) {
     release_date: releaseDate,
     overview,
     poster_path: posterPath,
-    vote_average: rating,
+    vote_average: tmdbRating,
     genre_ids: genreIds,
-    rating: userInitialRating,
+
+    rating: userRating,
   } = movie
 
   const formattedDate = releaseDate ? format(new Date(releaseDate), 'd MMM yyyy', { locale: ru }) : 'Неизвестно'
@@ -35,8 +36,6 @@ function MovieCard({ movie, onRatingChange }) {
     return '#E90000'
   }
 
-  const [userRating, setUserRating] = useState(userInitialRating || null)
-
   const handleRemoveRating = async () => {
     if (!guestSessionId) return
 
@@ -47,10 +46,7 @@ function MovieCard({ movie, onRatingChange }) {
       )
       const data = await response.json()
       if (data.success) {
-        setUserRating(null)
-        onRatingChange(id, null)
         removeMovieFromRated(id)
-        fetchRatedMovies()
       }
     } catch (error) {
       console.error('Ошибка при удалении оценки:', error)
@@ -61,7 +57,7 @@ function MovieCard({ movie, onRatingChange }) {
     if (!guestSessionId) return
 
     if (value === 0) {
-      handleRemoveRating()
+      await handleRemoveRating()
       return
     }
 
@@ -76,17 +72,14 @@ function MovieCard({ movie, onRatingChange }) {
       )
       const data = await response.json()
       if (data.success) {
-        setUserRating(value)
-        onRatingChange(id, value)
         updateRatedMovie(id, value)
-        fetchRatedMovies()
       }
     } catch (error) {
-      console.error('Ошибка при оценке фильма:', error)
+      console.error('Ошибка при изменении рейтинга:', error)
     }
   }
 
-  const movieGenres = genres.filter((genre) => genreIds.includes(genre.id))
+  const movieGenres = genres.filter((genre) => genreIds?.includes(genre.id))
 
   return (
     <div className="movie-card">
@@ -97,11 +90,12 @@ function MovieCard({ movie, onRatingChange }) {
           <div className="movie-card__no-image">Нет изображения</div>
         )}
       </div>
+
       <div className="movie-card__content">
         <div className="movie-card__zag">
           <h3 className="movie-card__title">{title}</h3>
-          <div className="movie-card__rating" style={{ borderColor: getRatingColor(rating) }}>
-            {rating || 'N/A'}
+          <div className="movie-card__rating" style={{ borderColor: getRatingColor(tmdbRating) }}>
+            {tmdbRating !== undefined && tmdbRating !== null ? tmdbRating.toFixed(1) : 'N/A'}
           </div>
         </div>
         <p className="movie-card__date">{formattedDate}</p>
@@ -111,7 +105,7 @@ function MovieCard({ movie, onRatingChange }) {
           ))}
         </div>
         <div className="movie-card__overview">{truncateText(overview, 120)}</div>
-        <Rate className="movie-card__rate" count={10} value={userRating} onChange={handleRateChange} allowClear />
+        <Rate className="movie-card__rate" count={10} value={userRating || 0} onChange={handleRateChange} allowClear />
       </div>
     </div>
   )
@@ -125,10 +119,9 @@ MovieCard.propTypes = {
     overview: PropTypes.string,
     poster_path: PropTypes.string,
     vote_average: PropTypes.number,
-    genre_ids: PropTypes.arrayOf(PropTypes.number).isRequired,
+    genre_ids: PropTypes.arrayOf(PropTypes.number),
     rating: PropTypes.number,
   }).isRequired,
-  onRatingChange: PropTypes.func.isRequired,
 }
 
 export default MovieCard

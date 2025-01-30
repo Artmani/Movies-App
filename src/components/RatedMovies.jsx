@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useReducer, useContext, useEffect } from 'react'
 
 import { GuestSessionContext } from '../hooks/GuestSessionContext'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
@@ -8,17 +8,34 @@ import OfflineAlert from './OfflineAlert'
 import ErrorAlert from './ErrorAlert'
 import LoadingIndicator from './LoadingIndicator'
 
+const initialState = {
+  isLoading: false,
+  error: null,
+}
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload }
+    case 'SET_ERROR':
+      return { ...state, error: action.payload }
+    default:
+      throw new Error()
+  }
+}
+
 function RatedMovies() {
   const { ratedMovies, fetchRatedMovies } = useContext(GuestSessionContext)
   const isOffline = useNetworkStatus()
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [state, dispatch] = useReducer(reducer, initialState)
+  const { isLoading, error } = state
 
   useEffect(() => {
-    setIsLoading(true)
+    dispatch({ type: 'SET_LOADING', payload: true })
+
     fetchRatedMovies()
-      .catch((err) => setError(err.message))
-      .finally(() => setIsLoading(false))
+      .catch((err) => dispatch({ type: 'SET_ERROR', payload: err.message }))
+      .finally(() => dispatch({ type: 'SET_LOADING', payload: false }))
   }, [])
 
   if (isLoading) {
@@ -32,7 +49,7 @@ function RatedMovies() {
       {ratedMovies.length === 0 ? (
         <p style={{ textAlign: 'center', fontSize: '18px', color: '#999' }}>Оценённых фильмов нет</p>
       ) : (
-        <MovieList movies={ratedMovies} onRatingChange={fetchRatedMovies} />
+        <MovieList movies={ratedMovies} onRatingChange={() => {}} />
       )}
     </div>
   )
