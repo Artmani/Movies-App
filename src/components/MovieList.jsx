@@ -6,7 +6,7 @@ import MovieCard from './MovieCard'
 
 function MovieList({ movies, onRatingChange }) {
   return (
-    <Row gutter={[0, 30]}>
+    <Row gutter={[0, 20]}>
       {movies.map((movie) => (
         <Col key={movie.id} span={12} className="app-col">
           <MovieCard movie={movie} onRatingChange={onRatingChange} />
