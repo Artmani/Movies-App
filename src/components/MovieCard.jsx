@@ -104,7 +104,7 @@ function MovieCard({ movie }) {
             <Tag key={genre.id}>{genre.name}</Tag>
           ))}
         </div>
-        <div className="movie-card__overview">{truncateText(overview, 120)}</div>
+        <div className="movie-card__overview">{truncateText(overview, 100)}</div>
         <Rate className="movie-card__rate" count={10} value={userRating || 0} onChange={handleRateChange} allowClear />
       </div>
     </div>

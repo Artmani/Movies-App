@@ -86,7 +86,6 @@ export function GuestSessionProvider({ children }) {
           console.error('Ошибка при создании гостевой сессии:', error)
         }
       }
-
       createGuestSession()
     }
   }, [fetchRatedMovies])
